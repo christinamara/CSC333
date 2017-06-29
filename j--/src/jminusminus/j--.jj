@@ -149,6 +149,7 @@ TOKEN:
 | < BOOLEAN: "boolean" >
 | < CHAR: "char" >
 | < CLASS: "class" >
+| < DO: "do" >
 | < ELSE: "else" >
 | < EXTENDS: "extends" >
 | < FALSE: "false" >
