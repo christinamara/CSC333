@@ -153,6 +153,7 @@ TOKEN:
 | < ELSE: "else" >
 | < EXTENDS: "extends" >
 | < FALSE: "false" >
+| < FOR: "for" >
 | < IF: "if" >
 | < IMPORT: "import" >
 | < INSTANCEOF: "instanceof" >
@@ -645,6 +646,8 @@ private JStatement blockStatement(): {
  *   statement ::= block
  *               | IF parExpression statement [ELSE statement]
  *               | WHILE parExpression statement 
+ *               | DO statement While parExpression
+ *               | FOR parExpression parExpression parExpression statement
  *               | RETURN [expression] SEMI
  *               | SEMI 
  *               | statementExpression SEMI
@@ -657,6 +660,8 @@ private JStatement statement(): {
     int line = 0;
     JStatement statement = null;
     JExpression test = null;
+	JExpression test2 = null;
+	JExpression test3 = null;
     JStatement consequent = null;
     JStatement alternate = null;
     JStatement body = null;
@@ -683,12 +688,14 @@ private JStatement statement(): {
         test = parExpression() 
         body = statement()
         { statement = new JWhileStatement( line, test, body ); } |
-		
         <DO> { line = token.beginLine; }
         body = statement()
 		<WHILE>
         test = parExpression() 
         { statement = new JWhileStatement( line, test, body ); } |
+		
+		<FOR> { line = token.beginLine; }
+        { statement = new JEmptyStatement( line ); } |
 		
         <RETURN> { line = token.beginLine; }
         [ 
