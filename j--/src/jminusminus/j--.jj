@@ -683,6 +683,13 @@ private JStatement statement(): {
         test = parExpression() 
         body = statement()
         { statement = new JWhileStatement( line, test, body ); } |
+		
+        <DO> { line = token.beginLine; }
+        body = statement()
+		<WHILE>
+        test = parExpression() 
+        { statement = new JWhileStatement( line, test, body ); } |
+		
         <RETURN> { line = token.beginLine; }
         [ 
             expr = expression() 
