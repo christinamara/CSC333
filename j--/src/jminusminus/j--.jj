@@ -182,6 +182,7 @@ TOKEN:
 | < INC: "++" >
 | < LAND: "&&" >
 | < LE: "<=" >
+| < LSHIFT: "<<" >
 | < LNOT: "!" >
 | < MINUS: "-" >
 | < PLUS_ASSIGN: "+=" >
@@ -214,7 +215,11 @@ TOKEN:
 // Literals
 TOKEN:
 {
-  < INT_LITERAL: ("0" | <NON_ZERO_DIGIT> (<DIGIT>)*) >
+  < INT_LITERAL: ( "0" | <NON_ZERO_DIGIT> (<DIGIT>)*) >
+| < BINT_LITERAL: "0" <BINT_TYPE> (<DIGIT>)* >
+| < #BINT_TYPE: ("b" | "B" ) >
+| < XINT_LITERAL: "0" <XINT_TYPE> (<DIGIT>)* >
+| < #XINT_TYPE: ( "x" | "X") >
 | < CHAR_LITERAL: "'" (<ESC> | ~["'","\\","\n","\r"]) "'" >
 | < STRING_LITERAL: "\"" (<ESC> | ~["\"","\\","\n","\r"])* "\"" >   
 | < #ESC: "\\" ["n","t","b","r","f","\\","'","\""] >
@@ -1239,18 +1244,48 @@ private JExpression relationalExpression(): {
 }
 {
     try {
-        lhs = additiveExpression() { line = lhs.line(); }
+        lhs = leftShiftExpression() { line = lhs.line(); }
         [ 
             <GT> 
-            rhs = additiveExpression()
+            rhs = leftShiftExpression()
             { lhs = new JGreaterThanOp( line, lhs, rhs ); } |
             <LE> 
-            rhs = additiveExpression()
+            rhs = leftShiftExpression()
             { lhs = new JLessEqualOp( line, lhs, rhs ); } |
             <INSTANCEOF> 
             type = referenceType()
             { lhs = new JInstanceOfOp( line, lhs, type ); }
         ]
+    } 
+    catch ( ParseException e ) { 
+        recoverFromError( new int[] { SEMI, EOF }, e ); 
+    }
+    { return lhs; }
+}
+
+/**
+ * Parse a left shift expression.
+ * 
+ * <pre>
+ *   leftShiftExpression ::= unaryExpression  // level 4
+ *                                  {LSHIFT unaryExpression}
+ * </pre>
+ * 
+ * @return an AST for a leftShiftExpression.
+ */
+
+private JExpression leftShiftExpression(): {
+    int line = 0;
+    JExpression lhs = null, rhs = null;
+}
+{
+    try {
+        lhs = unaryExpression() { line = lhs.line(); }
+        ( 
+            <LSHIFT> 
+            rhs = unaryExpression()
+            { lhs = new JLeftShiftOp( line, lhs, rhs ); }
+        )*
     } 
     catch ( ParseException e ) { 
         recoverFromError( new int[] { SEMI, EOF }, e ); 
@@ -1662,6 +1697,10 @@ private JExpression literal(): {
 {       
     try {
         <INT_LITERAL> 
+        { expr = new JLiteralInt( token.beginLine, token.image ); } | 
+		<BINT_LITERAL> 
+        { expr = new JLiteralInt( token.beginLine, token.image ); } | 
+		<XINT_LITERAL> 
         { expr = new JLiteralInt( token.beginLine, token.image ); } | 
         <CHAR_LITERAL> 
         { expr = new JLiteralChar( token.beginLine, token.image ); } |
