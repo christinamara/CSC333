@@ -695,6 +695,14 @@ private JStatement statement(): {
         { statement = new JWhileStatement( line, test, body ); } |
 		
 		<FOR> { line = token.beginLine; }
+		<LPAREN>
+		expression()
+		<SEMI>
+		relationalExpression()
+		<SEMI> <IDENTIFIER> <ASSIGN>
+		additiveExpression()
+		<RPAREN>
+		statement()
         { statement = new JEmptyStatement( line ); } |
 		
         <RETURN> { line = token.beginLine; }
